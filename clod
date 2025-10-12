@@ -129,9 +129,11 @@ run_vm () {
     local vm_name="$1"
     debug "Running $vm_name"
 
-    # Get directories to map into the VM
+# Get directories to map into the VM
     local args=()
-    get_map_directories args
+    while IFS= read -r -d '' arg; do
+        args+=("$arg")
+    done < <(get_map_directories)
     [[ "${NO_GRAPHICS:-}" == "" ]] || args+=("--no-graphics")
 
     tart run \
@@ -278,13 +280,10 @@ SELECT name, path, CASE WHEN active = 1 THEN 'yes' ELSE 'no' END as active, date
 EOF
 }
 
-# Get all projects as bash array with --dir format
-# Usage: get_map_directories ARRAY_NAME
-# Populates the named array with entries like: "--dir" "name:path"
+# Get all projects as a NUL-delimited list of --dir arguments
+# Usage: while IFS= read -r -d '' arg; do args+=("$arg"); done < <(get_map_directories)
+# Outputs each argument separated by NUL character for safe array building
 get_map_directories() {
-    local -n arr="$1"
-    arr=()
-
     local result
     result=$(sqlite3 -separator '|' "$DB_FILE" <<EOF || return 1
 SELECT name, path FROM projects ORDER BY date_added DESC;
@@ -293,14 +292,14 @@ EOF
 
     # Always map the guest directory into the VM as "__install"
     # so install/configure scripts are available during build
-    arr+=("--dir" "__install:$WORKSPACE/guest")
+    printf '%s\0' "--dir" "__install:$WORKSPACE/guest"
 
     if [[ -n "$result" ]]; then
         while IFS='|' read -r name path; do
             if [[ ! -d "$path" ]]; then
                 abort "Directory '$path' does not exist\nTry: clod remove '$name'"
             fi
-            arr+=("--dir" "${name}:${path}")
+            printf '%s\0' "--dir" "${name}:${path}"
         done <<< "$result"
     fi
 }
