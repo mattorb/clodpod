@@ -282,12 +282,23 @@ remove_project() {
         error "Error: Project name or path required to remove project"
         return 1
     fi
-    path="$(realpath "$identifier")"
+    
+    # Try to resolve the path if it exists as a directory
+    local path=""
+    if [[ -d "$identifier" ]]; then
+        path="$(realpath "$identifier")"
+    fi
 
+    # Build the DELETE query
+    local query="DELETE FROM projects WHERE name = '$identifier' OR path = '$identifier'"
+    if [[ -n "$path" ]]; then
+        query="$query OR path = '$path'"
+    fi
+    
     # Try to remove by name first, then by path
     local rows_affected
     rows_affected=$(sqlite3 "$DB_FILE" <<EOF
-DELETE FROM projects WHERE name = '$identifier' OR path = '$identifier' OR path = '$path';
+$query;
 SELECT changes();
 EOF
 )
@@ -715,7 +726,7 @@ fi
 
 debug "Connect to $DST_VM_NAME (ssh clodpod@$IPADDR)"
 if [[ "${VNC:-}" != "" ]]; then
-    info "VNC access available at $IPADDR:5900"
+    info "VNC access available at $IPADDR:5900.  Tart default user/pw: admin/admin"
 fi
 
 if [[ "${COMMAND:-}" == "start" ]]; then
