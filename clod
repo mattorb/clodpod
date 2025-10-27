@@ -160,6 +160,7 @@ run_vm () {
         args+=("$arg")
     done < <(get_map_directories)
     [[ "${NO_GRAPHICS:-}" == "" ]] || args+=("--no-graphics")
+    [[ "${VNC:-}" != "" ]] && args+=("--vnc")
 
     tart run \
         "${args[@]}" \
@@ -378,6 +379,7 @@ init_db
 # Parse command line
 ###############################################################################
 NO_GRAPHICS="${NO_GRAPHICS:-}"
+VNC="${VNC:-}"
 
 show_help() {
     echo "Usage: clod [options] command [args...]"
@@ -385,6 +387,7 @@ show_help() {
     echo "Options:"
     echo "  --graphics           Run virtual machine with graphics (default)"
     echo "  --no-graphics        Run virtual machine without graphics"
+    echo "  --vnc                Enable VNC access to virtual machine"
     echo "  --rebuild-base       Force rebuild of the base image (brew update)"
     echo "  --rebuild-dst        Force rebuild of the final image (update \$HOME)"
     echo "  -v, --verbose        Enable verbose output (repeat for more verbosity)"
@@ -425,6 +428,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --no-graphics)
             NO_GRAPHICS=true
+            shift
+            ;;
+        --vnc)
+            VNC=true
             shift
             ;;
         --rebuild-base)
@@ -697,11 +704,6 @@ elif ! check_projects_active ; then
     run_vm "$DST_VM_NAME"
 fi
 
-if [[ "${COMMAND:-}" == "start" ]]; then
-    info "clodpod VM running"
-    exit 0
-fi
-
 debug "Checking $DST_VM_NAME IP connectivity"
 IPADDR="$(tart ip --wait 20 "$DST_VM_NAME")"
 if ! nc -z "$IPADDR" 22 ; then
@@ -712,6 +714,14 @@ if ! nc -z "$IPADDR" 22 ; then
 fi
 
 debug "Connect to $DST_VM_NAME (ssh clodpod@$IPADDR)"
+if [[ "${VNC:-}" != "" ]]; then
+    info "VNC access available at $IPADDR:5900"
+fi
+
+if [[ "${COMMAND:-}" == "start" ]]; then
+    info "clodpod VM running"
+    exit 0
+fi
 
 # Check if current directory is inside an existing project
 INITIAL_DIR=""
