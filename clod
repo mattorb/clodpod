@@ -49,28 +49,19 @@ if [[ ! -f "$HOME/.claude.json" ]]; then
 fi
 
 # https://github.com/orgs/cirruslabs/packages?tab=packages&q=macos-
-declare -A MACOS_VERSIONS
-MACOS_VERSIONS[tahoe]=1
-MACOS_VERSIONS[sequoia]=1
-MACOS_VERSIONS[sonoma]=1
-MACOS_VERSIONS[ventura]=1
-MACOS_VERSIONS[monterey]=1
+MACOS_VERSIONS="tahoe sequoia sonoma ventura monterey"
+MACOS_FLAVORS="vanilla base xcode"
 
-declare -A MACOS_FLAVORS
-MACOS_FLAVORS[vanilla]=1
-MACOS_FLAVORS[base]=1
-MACOS_FLAVORS[xcode]=1
-
-# Convert to lowercase
-MACOS_VERSION="${MACOS_VERSION,,}"
-MACOS_FLAVOR="${MACOS_FLAVOR,,}"
+# Convert to lowercase (bash 3.x compatible)
+MACOS_VERSION="$(echo "$MACOS_VERSION" | tr '[:upper:]' '[:lower:]')"
+MACOS_FLAVOR="$(echo "$MACOS_FLAVOR" | tr '[:upper:]' '[:lower:]')"
 
 # Validate
-if [[ -z "${MACOS_VERSIONS[$MACOS_VERSION]:-}" ]]; then
-    abort "Unknown MACOS_VERSION $MACOS_VERSION; try ${!MACOS_VERSIONS[*]}"
+if [[ " $MACOS_VERSIONS " != *" $MACOS_VERSION "* ]]; then
+    abort "Unknown MACOS_VERSION $MACOS_VERSION; try $MACOS_VERSIONS"
 fi
-if [[ -z "${MACOS_FLAVORS[$MACOS_FLAVOR]:-}" ]]; then
-    abort "Unknown MACOS_FLAVOR $MACOS_FLAVOR; try ${!MACOS_FLAVORS[*]}"
+if [[ " $MACOS_FLAVORS " != *" $MACOS_FLAVOR "* ]]; then
+    abort "Unknown MACOS_FLAVOR $MACOS_FLAVOR; try $MACOS_FLAVORS"
 fi
 
 
@@ -461,7 +452,11 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
-set -- "${NEW_ARGS[@]}"
+if [[ ${#NEW_ARGS[@]} -gt 0 ]]; then
+    set -- "${NEW_ARGS[@]}"
+else
+    set --
+fi
 
 # Parse fixed arguments
 case "${1:-}" in
