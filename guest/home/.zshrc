@@ -70,6 +70,9 @@ if [[ -d "$HOME/user/bin" ]]; then
     export PATH="$HOME/user/bin:$PATH"
 fi
 
+# Add .local/bin for cursor and other local binaries
+export PATH="$HOME/.local/bin:$PATH"
+
 
 ###############################################################################
 # Create symbolic links for all projects

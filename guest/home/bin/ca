@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+if ! command -v cursor-agent &> /dev/null; then
+    echo >&2 "Installing cursor..."
+    curl https://cursor.com/install -fsS | bash
+    # Add .local/bin to PATH
+    export PATH="$HOME/.local/bin:$PATH"
+fi
+
+security unlock-keychain -p ''
+
+exec cursor-agent "$@"
+

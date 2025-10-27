@@ -409,6 +409,7 @@ show_help() {
     echo ""
     echo "Commands:"
     echo "  cl, claude [PATH] [NAME]  Run Claude Code"
+    echo "  ca, cursor-agent [PATH] [NAME]  Run Cursor Agent"
     echo "  s,  shell  [PATH] [NAME]  Run zsh shell"
     echo "  a,  add PATH [NAME]       Add a new project"
     echo "  rm, remove <identifier>   Remove project by name or path"
@@ -490,6 +491,11 @@ case "${1:-}" in
         ;;
     gemini|gem|g)
         COMMAND=gemini
+        ARG_DIR="${2:-}"
+        ARG_NAME="${3:-}"
+        ;;
+    cursor-agent|ca)
+        COMMAND=ca
         ARG_DIR="${2:-}"
         ARG_NAME="${3:-}"
         ;;
